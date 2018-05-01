@@ -37,7 +37,8 @@ class buffering(multiprocessing.Process):
     def run(self):
         self.logger.info("buffering queue runner")
         while True:
-            buf = self.queue.get()
+            try:buf = self.queue.get()
+            except:break
             if ((self.cfg.getbool('cmdlopt', 'endless_loop') == False or self.cfg.getoption('cmdlopt', 'outfile') != None) and self.PROCESS_ROUND_DONE):
                 break
             self.proc.check_silence(buf)

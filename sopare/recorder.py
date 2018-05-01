@@ -91,8 +91,9 @@ class recorder():
                     self.logger.info("Buffering not alive, stop recording")
                     self.queue.close()
                     break
-            except IOError as e:
-                self.logger.warning("stream read error "+str(e))
+            except:
+                self.logger.warning("stream read error")
+                break
         self.stop()
         sys.exit()
 

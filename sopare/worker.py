@@ -85,7 +85,8 @@ class worker(multiprocessing.Process):
     def run(self):
         self.logger.info("worker queue runner started")
         while self.running:
-            obj = self.queue.get()
+            try:obj = self.queue.get()
+            except:break
             if (obj['action'] == 'data'):
                 raw_token = obj['token']
                 if (self.cfg.getbool('cmdlopt', 'wave') == True or True): # TODO: "or True" is just temporary for testing. Must be removed later on!
