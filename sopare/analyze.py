@@ -198,3 +198,9 @@ class analyze():
 
     def reset(self):
         self.last_results = None
+
+    def exit(self):
+        for p in self.plugins:
+            try:
+                p.exit()
+            except:pass

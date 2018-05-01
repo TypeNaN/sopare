@@ -85,46 +85,49 @@ class worker(multiprocessing.Process):
     def run(self):
         self.logger.info("worker queue runner started")
         while self.running:
-            try:obj = self.queue.get()
-            except:break
-            if (obj['action'] == 'data'):
-                raw_token = obj['token']
-                if (self.cfg.getbool('cmdlopt', 'wave') == True or True): # TODO: "or True" is just temporary for testing. Must be removed later on!
-                    self.rawbuf.extend(raw_token)
-                fft = obj['fft']
-                if (self.cfg.getbool('cmdlopt', 'plot') == True):
-                    self.rawfft.extend(fft)
-                meta = obj['meta']
-                norm = obj['norm']
-                characteristic = obj['characteristic']
-                self.character.append((characteristic, meta))
-                self.compare.word(self.character)
-                if (self.cfg.getoption('cmdlopt', 'dict') != None):
-                    self.raw_character.append({ 'fft': fft, 'norm': norm, 'meta': meta })
-                if (characteristic != None):
-                    self.logger.debug('characteristic = ' + str(self.counter) + ' ' + str(characteristic))
-                    self.logger.debug('meta = '+str(meta))
-                    if (self.cfg.getbool('cmdlopt', 'wave') == True):
-                        self.util.savefilteredwave('token'+str(self.counter)+self.uid, raw_token)
-                    if (self.cfg.getbool('cmdlopt', 'plot') == True and self.plot_counter < 6):
-                        self.visual.create_sample(characteristic['norm'], 'norm'+str(self.plot_counter)+'.png')
-                        self.visual.create_sample(fft, 'fft'+str(self.plot_counter)+'.png')
-                    self.plot_counter += 1
-                self.counter += 1
-            elif (obj['action'] == 'reset' and self.cfg.getoption('cmdlopt', 'dict') == None):
-                self.reset()
-            elif (obj['action'] == 'stop'):
-                self.running = False
+            try:
+                obj = self.queue.get()
+                if (obj['action'] == 'data'):
+                    raw_token = obj['token']
+                    if (self.cfg.getbool('cmdlopt', 'wave') == True or True): # TODO: "or True" is just temporary for testing. Must be removed later on!
+                        self.rawbuf.extend(raw_token)
+                    fft = obj['fft']
+                    if (self.cfg.getbool('cmdlopt', 'plot') == True):
+                        self.rawfft.extend(fft)
+                    meta = obj['meta']
+                    norm = obj['norm']
+                    characteristic = obj['characteristic']
+                    self.character.append((characteristic, meta))
+                    self.compare.word(self.character)
+                    if (self.cfg.getoption('cmdlopt', 'dict') != None):
+                        self.raw_character.append({ 'fft': fft, 'norm': norm, 'meta': meta })
+                    if (characteristic != None):
+                        self.logger.debug('characteristic = ' + str(self.counter) + ' ' + str(characteristic))
+                        self.logger.debug('meta = '+str(meta))
+                        if (self.cfg.getbool('cmdlopt', 'wave') == True):
+                            self.util.savefilteredwave('token'+str(self.counter)+self.uid, raw_token)
+                        if (self.cfg.getbool('cmdlopt', 'plot') == True and self.plot_counter < 6):
+                            self.visual.create_sample(characteristic['norm'], 'norm'+str(self.plot_counter)+'.png')
+                            self.visual.create_sample(fft, 'fft'+str(self.plot_counter)+'.png')
+                        self.plot_counter += 1
+                    self.counter += 1
+                elif (obj['action'] == 'reset' and self.cfg.getoption('cmdlopt', 'dict') == None):
+                    self.reset()
+                elif (obj['action'] == 'stop'):
+                    self.running = False
 
-            if (self.counter > 0 and meta != None):
-                for m in meta:
-                    if (m['token'] == 'start analysis'):
-                        self.remove_silence(m)
-                        if (self.cfg.getoption('cmdlopt', 'dict') == None):
-                            self.analyze.do_analysis(self.compare.get_results(), self.character, self.rawbuf)
-                        else:
-                            self.util.store_raw_dict_entry(self.cfg.getoption('cmdlopt', 'dict'), self.raw_character)
-                        self.reset()
+                if (self.counter > 0 and meta != None):
+                    for m in meta:
+                        if (m['token'] == 'start analysis'):
+                            self.remove_silence(m)
+                            if (self.cfg.getoption('cmdlopt', 'dict') == None):
+                                self.analyze.do_analysis(self.compare.get_results(), self.character, self.rawbuf)
+                            else:
+                                self.util.store_raw_dict_entry(self.cfg.getoption('cmdlopt', 'dict'), self.raw_character)
+                            self.reset()
+            except:
+                self.analyze.exit()
+                self.running = False
 
         if (self.cfg.getbool('cmdlopt', 'wave') == True and len(self.rawbuf) > 0):
             self.save_wave_buf()
@@ -133,4 +136,3 @@ class worker(multiprocessing.Process):
 
         if (self.cfg.getbool('cmdlopt', 'plot') == True):
             self.visual.create_sample(self.rawfft, 'fft.png')
-
